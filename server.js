@@ -212,7 +212,7 @@ const contacts = [
 app.get("/contacts", (req, res) => {
   const { search, gender, filter } = req.query;
 
-  let filteredUsers = contacts;
+  let filteredUsers = [...contacts];
 
   if (search) {
     console.log(search);
@@ -229,25 +229,19 @@ app.get("/contacts", (req, res) => {
   if (gender) {
     filteredUsers = filteredUsers.filter((e) => e.gender === gender);
   }
-
   if (filter) {
     filteredUsers = filteredUsers.sort((a, b) => {
       if (filter === "z") {
-        if (a.name > b.name) return -1;
-        if (a.name < b.name) return 1;
-        if (a.name === b.name) return 0;
+        return a.name.localeCompare(b.name) * -1;
       }
       if (filter === "date") {
-        if (a.creationDate > b.creationDate) return -1;
-        if (a.creationDate < b.creationDate) return 1;
-        if (a.creationDate === b.creationDate) return 0;
+        const dateA = new Date(a.creationDate);
+        const dateB = new Date(b.creationDate);
+        return dateB - dateA; // Sort in descending order
       }
-      if (a.name < b.name) return -1;
-      if (a.name > b.name) return 1;
-      if (a.name === b.name) return 0;
+      return a.name.localeCompare(b.name);
     });
   }
-
   res.json(filteredUsers);
 });
 

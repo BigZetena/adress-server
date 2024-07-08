@@ -233,8 +233,11 @@ const contacts = [
 
 // Маршрут для получения списка пользователей с фильтрацией
 app.get("/contacts", (req, res) => {
-  const { search, gender, filter } = req.query;
+  const { search, gender, filter, page = 0, limit = 10000 } = req.query;
   let filteredUsers = [...contacts];
+
+  const startIndex = page * limit;
+  const endIndex = startIndex + limit;
 
   if (search) {
     filteredUsers = filteredUsers.filter(
@@ -263,13 +266,19 @@ app.get("/contacts", (req, res) => {
       return a.name.localeCompare(b.name);
     });
   }
-  res.json(filteredUsers);
+
+  const data = filteredUsers.slice(startIndex, endIndex);
+
+  const lastPage = Math.floor((filteredUsers.length - 1) / limit);
+  const dataLength = filteredUsers.length;
+
+  res.json({ lastPage, dataLength, page, limit, data, filter });
 });
 
 // Маршрут для добавления нового контакта
 app.post("/contacts", upload.single("image"), (req, res) => {
   const { name, surname, about, gender, mail, phone } = req.body;
-  const image = req.file ? req.file.path : null;
+  const image = req.file ? req.file.destination + req.file.filename : null;
 
   const newContact = {
     id: contacts.length + 1,

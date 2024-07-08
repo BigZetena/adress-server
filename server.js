@@ -1,10 +1,33 @@
 const express = require("express");
 const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
 const app = express();
 const port = 3000;
 app.use(cors("*"));
-// Пример данных пользователей
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// Настройка multer для загрузки файлов
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
+
+// Проверка существования директории uploads
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
+
+// Пример данных пользователей
 const contacts = [
   {
     id: 1,
@@ -211,11 +234,9 @@ const contacts = [
 // Маршрут для получения списка пользователей с фильтрацией
 app.get("/contacts", (req, res) => {
   const { search, gender, filter } = req.query;
-
   let filteredUsers = [...contacts];
 
   if (search) {
-    console.log(search);
     filteredUsers = filteredUsers.filter(
       (e) =>
         e.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -237,7 +258,7 @@ app.get("/contacts", (req, res) => {
       if (filter === "date") {
         const dateA = new Date(a.creationDate);
         const dateB = new Date(b.creationDate);
-        return dateB - dateA; // Sort in descending order
+        return dateB - dateA; // Сортировка в порядке убывания
       }
       return a.name.localeCompare(b.name);
     });
@@ -245,6 +266,29 @@ app.get("/contacts", (req, res) => {
   res.json(filteredUsers);
 });
 
+// Маршрут для добавления нового контакта
+app.post("/contacts", upload.single("image"), (req, res) => {
+  const { name, surname, about, gender, mail, phone } = req.body;
+  const image = req.file ? req.file.path : null;
+
+  const newContact = {
+    id: contacts.length + 1,
+    name,
+    surname,
+    about,
+    gender,
+    mail,
+    phone,
+    creationDate: new Date().toISOString(),
+    image,
+  };
+
+  contacts.push(newContact);
+  res.status(201).json(newContact);
+});
+
+app.use("/uploads", express.static("uploads"));
+
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}/`);
+  console.log(`Сервер запущен по адресу http://localhost:${port}/`);
 });

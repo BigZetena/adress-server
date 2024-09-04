@@ -91,6 +91,13 @@ app.post("/contacts", upload.single("image"), (req, res) => {
   const { name, surname, about, gender, mail, phone } = req.body;
   const image = req.file ? req.file.destination + req.file.filename : null;
 
+  if (!name || !surname || !about || !gender || !mail || !phone) {
+    return res.status(400).json({
+      error:
+        "Одно или несколько обязательных полей не указано. Проверьте ввод данных.",
+    });
+  }
+
   const newContact = {
     id: contacts.length + 1,
     name,

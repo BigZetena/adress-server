@@ -99,7 +99,7 @@ app.post("/contacts", upload.single("image"), (req, res) => {
   }
 
   const newContact = {
-    id: contacts.length + 1,
+    id: Date.now(),
     name,
     surname,
     about,
